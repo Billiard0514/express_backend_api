@@ -34,7 +34,7 @@ const sendOTPEmail = async (email: string, otp: string): Promise<void> => {
     await transporter.sendMail(mailOptions);
 };
 
-// Register with OTP
+// Register without OTP
 export const register = async (req: Request, res: Response): Promise<Response | void> => {
     const { email, password } = req.body;
 
@@ -45,14 +45,17 @@ export const register = async (req: Request, res: Response): Promise<Response | 
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Generate and store OTP
-        const otp = generateOTP();
-        otpStore[email] = otp;
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Send OTP via email
-        await sendOTPEmail(email, otp);
+        // Create a new user
+        const newUser = new User({ email, password: hashedPassword });
+        await newUser.save();
 
-        res.status(200).json({ message: 'OTP sent to your email. Please verify to complete registration.' });
+        // Generate a JWT token
+        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+
+        res.status(201).json({ token });
     } catch (error) {
         console.error('Error during registration:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -89,7 +92,7 @@ export const verifyRegisterOTP = async (req: Request, res: Response): Promise<Re
     }
 };
 
-// Login with OTP
+// Login without OTP
 export const login = async (req: Request, res: Response): Promise<Response | void> => {
     const { email, password } = req.body;
 
@@ -106,14 +109,10 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // Generate and store OTP
-        const otp = generateOTP();
-        otpStore[email] = otp;
+        // Generate a JWT token
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
-        // Send OTP via email
-        await sendOTPEmail(email, otp);
-
-        res.status(200).json({ message: 'OTP sent to your email. Please verify to complete login.' });
+        res.status(200).json({ token });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal server error' });
