@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import passport from 'passport';
-import { register, login, profile, verifyLoginOTP, verifyRegisterOTP, forgotPassword, resetPassword } from '../controllers/authController';
+import { register, login, profile, verifyLoginOTP, verifyRegisterOTP, forgotPassword, resetPassword, verifyForgotPasswordOTP } from '../controllers/authController';
 
 const router = Router();
 
@@ -15,6 +15,7 @@ router.post('/register', asyncHandler(register));
 router.post('/registerVerify', asyncHandler(verifyRegisterOTP));
 router.get('/profile', passport.authenticate('jwt', { session: false }), asyncHandler(profile));
 router.post('/forgotPassword', asyncHandler(forgotPassword));
+router.post('/forgotPasswordVerify', asyncHandler(verifyForgotPasswordOTP));
 router.post('/resetPassword', asyncHandler(resetPassword));
 
 export default router;

@@ -36,7 +36,7 @@ const sendOTPEmail = async (email: string, otp: string): Promise<void> => {
 
 // Register without OTP
 export const register = async (req: Request, res: Response): Promise<Response | void> => {
-    const { email, password } = req.body;
+    const { email, password, fullName } = req.body;
 
     try {
         // Check if the user already exists
@@ -49,7 +49,7 @@ export const register = async (req: Request, res: Response): Promise<Response | 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create a new user
-        const newUser = new User({ email, password: hashedPassword });
+        const newUser = new User({ email, password: hashedPassword, fullName });
         await newUser.save();
 
         // Generate a JWT token
@@ -64,7 +64,7 @@ export const register = async (req: Request, res: Response): Promise<Response | 
 
 // Verify OTP and complete registration
 export const verifyRegisterOTP = async (req: Request, res: Response): Promise<Response | void> => {
-    const { email, password, otp } = req.body;
+    const { email, password, otp, fullName } = req.body;
 
     try {
         // Verify OTP
@@ -76,7 +76,7 @@ export const verifyRegisterOTP = async (req: Request, res: Response): Promise<Re
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create a new user
-        const newUser = new User({ email, password: hashedPassword });
+        const newUser = new User({ email, password: hashedPassword, fullName });
         await newUser.save();
 
         // Generate a JWT token
@@ -112,7 +112,7 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
         // Generate a JWT token
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
-        res.status(200).json({ token });
+        res.status(200).json({ token, user });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -172,16 +172,30 @@ export const forgotPassword = async (req: Request, res: Response): Promise<Respo
     }
 };
 
-// Verify OTP and Reset Password
-export const resetPassword = async (req: Request, res: Response): Promise<Response | void> => {
-    const { email, otp, newPassword } = req.body;
-
+// Verify OTP for Forgot Password
+export const verifyForgotPasswordOTP = async (req: Request, res: Response): Promise<Response | void> => {
+    const { email, otp } = req.body;
+    
     try {
         // Verify OTP
         if (!otp || otpStore[email] !== otp) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
+        // Clear OTP from store
+        delete otpStore[email];
+
+        res.status(200).json({ message: 'OTP verified successfully. You can now reset your password.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+// Verify OTP and Reset Password
+export const resetPassword = async (req: Request, res: Response): Promise<Response | void> => {
+    const { email, newPassword } = req.body;
+
+    try {
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -195,11 +209,10 @@ export const resetPassword = async (req: Request, res: Response): Promise<Respon
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+        
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
-        // Clear OTP from store
-        delete otpStore[email];
-
-        res.status(200).json({ message: 'Password reset successfully' });
+        res.status(200).json({ message: 'Password reset successfully', user, token });
     } catch (error) {
         console.error('Error during password reset:', error);
         res.status(500).json({ message: 'Internal server error' });

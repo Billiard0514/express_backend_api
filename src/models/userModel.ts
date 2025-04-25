@@ -19,6 +19,11 @@ const UserSchema: Schema = new Schema(
       type: String,
       required: true,
     },
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+    }
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields
