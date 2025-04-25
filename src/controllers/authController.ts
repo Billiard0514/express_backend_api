@@ -182,10 +182,17 @@ export const verifyForgotPasswordOTP = async (req: Request, res: Response): Prom
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+
         // Clear OTP from store
         delete otpStore[email];
 
-        res.status(200).json({ message: 'OTP verified successfully. You can now reset your password.' });
+        res.status(200).json({ message: 'OTP verified successfully. You can now reset your password.', token });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error' });
     }
@@ -196,6 +203,10 @@ export const resetPassword = async (req: Request, res: Response): Promise<Respon
     const { email, newPassword } = req.body;
 
     try {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 

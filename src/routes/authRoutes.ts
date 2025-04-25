@@ -16,6 +16,6 @@ router.post('/registerVerify', asyncHandler(verifyRegisterOTP));
 router.get('/profile', passport.authenticate('jwt', { session: false }), asyncHandler(profile));
 router.post('/forgotPassword', asyncHandler(forgotPassword));
 router.post('/forgotPasswordVerify', asyncHandler(verifyForgotPasswordOTP));
-router.post('/resetPassword', asyncHandler(resetPassword));
+router.post('/resetPassword', passport.authenticate('jwt', { session: false }), asyncHandler(resetPassword));
 
 export default router;
