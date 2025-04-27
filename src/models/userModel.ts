@@ -23,7 +23,12 @@ const UserSchema: Schema = new Schema(
       type: String,
       required: true,
       trim: true,
-    }
+    },
+    role: {
+      type: Schema.Types.ObjectId,
+      ref: 'Role', // Reference to the Role model
+      required: false,
+    },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import passport from 'passport';
+import passport from 'passport'
+import jwt from 'jsonwebtoken';
 import { register, login, profile, verifyLoginOTP, verifyRegisterOTP, forgotPassword, resetPassword, verifyForgotPasswordOTP } from '../controllers/authController';
 
 const router = Router();

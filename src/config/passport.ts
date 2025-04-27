@@ -1,14 +1,15 @@
 import passport from 'passport';
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
+import { Strategy, ExtractJwt } from 'passport-jwt';
 import User from '../models/userModel';
+import { JWT_SECRET } from './global';
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Extract token from Authorization header
-    secretOrKey: process.env.JWT_SECRET || 'default_secret', // Use the same secret as in authController
+    secretOrKey: JWT_SECRET || 'default_secret', // Use the same secret as in authController
 };
 
 passport.use(
-    new JwtStrategy(opts, async (jwtPayload, done) => {
+    new Strategy(opts, async (jwtPayload, done) => {
         try {
             const user = await User.findById(jwtPayload.id); // Find user by ID in the token payload
             if (user) {

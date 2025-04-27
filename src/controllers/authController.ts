@@ -2,9 +2,8 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import User from '../models/userModel';
-import dotenv from 'dotenv';
-dotenv.config();
 import nodemailer from 'nodemailer';
+import { EMAIL_PASS, EMAIL_USER, JWT_SECRET } from '../config/global';
 
 const otpStore: { [key: string]: string } = {}; // In-memory store for OTPs
 
@@ -17,15 +16,15 @@ const generateOTP = (): string => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'mykhailokopotiuk@gmail.com',
-        pass: process.env.EMAIL_PASS || 'omka jnqg diku imde',
+        user: EMAIL_USER || 'mykhailokopotiuk@gmail.com',
+        pass: EMAIL_PASS || 'omka jnqg diku imde',
     },
 });
 
 // Send OTP to the user's email
 const sendOTPEmail = async (email: string, otp: string): Promise<void> => {
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: EMAIL_USER,
         to: email,
         subject: 'Your OTP Code',
         text: `Your OTP code is: ${otp}. It is valid for 5 minutes.`,
@@ -53,7 +52,7 @@ export const register = async (req: Request, res: Response): Promise<Response | 
         await newUser.save();
 
         // Generate a JWT token
-        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: newUser.id }, JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
         res.status(201).json({ token });
     } catch (error) {
@@ -80,7 +79,7 @@ export const verifyRegisterOTP = async (req: Request, res: Response): Promise<Re
         await newUser.save();
 
         // Generate a JWT token
-        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: newUser.id }, JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
         // Clear OTP from store
         delete otpStore[email];
@@ -98,7 +97,7 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
 
     try {
         // Find the user by email
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).populate('role');
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -110,8 +109,8 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
         }
 
         // Generate a JWT token
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
-
+        const token = jwt.sign({ id: user.id }, JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+        
         res.status(200).json({ token, user });
     } catch (error) {
         console.error('Error during login:', error);
@@ -135,7 +134,7 @@ export const verifyLoginOTP = async (req: Request, res: Response): Promise<Respo
             return res.status(401).json({ message: 'User not found' });
         }
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
         // Clear OTP from store
         delete otpStore[email];
@@ -187,7 +186,7 @@ export const verifyForgotPasswordOTP = async (req: Request, res: Response): Prom
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
         // Clear OTP from store
         delete otpStore[email];
@@ -206,7 +205,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<Respon
         if (!req.user) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        
+
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -221,7 +220,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<Respon
             return res.status(404).json({ message: 'User not found' });
         }
         
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id }, JWT_SECRET || 'default_secret', { expiresIn: '1h' });
 
         res.status(200).json({ message: 'Password reset successfully', user, token });
     } catch (error) {

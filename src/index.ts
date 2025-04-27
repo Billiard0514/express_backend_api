@@ -1,15 +1,19 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import authRoutes from './routes/authRoutes';
 import './config/passport'; // Initialize Passport configuration
 import connectDB from './config/dbConfig'; // Import the database configuration
+import authRoutes from './routes/authRoutes';
+import roleRoutes from './routes/roleRoutes';
+import serviceRoutes from './routes/serviceRoutes';
+import carTypeRoutes from './routes/carTypeRoutes';
+import brandRoutes from './routes/brandRoutes';
+import newsRoutes from './routes/newsRoutes';
+import { PORT } from './config/global';
 
-import dotenv from 'dotenv';
-dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = PORT || 3000;
 
 // Connect to MongoDB
 connectDB();
@@ -25,8 +29,13 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/role', roleRoutes);
+app.use('/api/service', serviceRoutes);
+app.use('/api/car', carTypeRoutes);
+app.use('/api/brand', brandRoutes);
+app.use('/api/news', newsRoutes);
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
