@@ -10,6 +10,6 @@ const asyncHandler = (fn: Function) => (req: any, res: any, next: any) => {
 };
 
 router.get('/getNews', asyncHandler(getNews));
-router.get('/addNews', upload.single('image'), asyncHandler(addNews));
+router.post('/add', asyncHandler(addNews));
 
 export default router;

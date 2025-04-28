@@ -22,6 +22,7 @@ connectDB();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(passport.initialize());
+app.use('/uploads', express.static('uploads')); // Serve static files from the uploads directory
 
 app.get('/', (req, res) => {
   res.send('Server is available');
